@@ -1,11 +1,16 @@
-# AI powered code reviews using Gemini CLI
-name: Code Reviews
+# AI enabled code reviews using Gemini CLI
+# - Requires GCP service account stored in GOOGLE_API_CREDENTIALS secret
+#name: Code Reviews
+# test
 run-name: Reviewing ${{ github.actor }}'s code changes  🚀
 on: [push, workflow_dispatch]
 env:
+  LOCATION: '${{ secrets.LOCATION }}'
+  PROJECT_ID: '${{ secrets.PROJECT_ID }}'
+  JIRA_CLOUD: true
   GEMINI_API_KEY: '${{ secrets.GEMINI_API_KEY }}'
 jobs:
-  Gemini-CLI-Code-Reviews:
+  Code-Reviews:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -17,12 +22,29 @@ jobs:
       - run: cd ${{ github.workspace }}/menu-service
       - run: npm install -g @google/gemini-cli
 
-      - name: Documentation Coverage Review
-        run: echo '## Documentation Coverage Review Results 🚀' >> $GITHUB_STEP_SUMMARY
-      - run: gemini -p 'review menu-service java code and check that all classes are properly documented and provide suggestions on how to improve the documentation in the code and return findings as text in markdown format to the console' >> $GITHUB_STEP_SUMMARY
+      - name: Comments Coverage Review
+        run: echo '## Comments Coverage Review Results 🚀' >> $GITHUB_STEP_SUMMARY
+      - run: gemini -p 'Review menu-service java code and check that all classes are properly documented and return findings as text to the console' -y >> $GITHUB_STEP_SUMMARY
         shell: bash
+        
+      - name: Code Review
+        shell: bash
+        run: |
+          echo '## Code Review Results 🚀' >> $GITHUB_STEP_SUMMARY
+          prompt_content=$(cat .github/prompts/code_review.md)
+          gemini -p "$prompt_content" -y >> $GITHUB_STEP_SUMMARY
 
       - name: Test Coverage Review
         run: echo '## Test Coverage Review Results 🚀' >> $GITHUB_STEP_SUMMARY
-      - run: gemini -p 'review menu-service java code and check that all classes and methods have test coverage and provide suggestions on how to improve the test coverage in the code and return findings as text in markdown format to the console' -y >> $GITHUB_STEP_SUMMARY
+      - run: gemini -p 'review menu-service java code and check that all classes and methods have test coverage and return findings as text to the console' -y >> $GITHUB_STEP_SUMMARY
+        shell: bash
+
+      - name: Performance Review
+        run: echo '## Performance Review Results 🚀' >> $GITHUB_STEP_SUMMARY
+      - run: gemini -p 'review menu-service java code, You are an experienced staff level programmer and an application performance tuning expert doing a code review. Find language specific performance issues in the code, such string concatenation, as memory leaks, race conditions, and deadlocks.  For each issue provide detailed explanation. Output the findings with class and method names followed by the found issues' -y >> $GITHUB_STEP_SUMMARY
+        shell: bash
+
+      - name: Security Review
+        run: echo '## Security Review Results 🚀' >> $GITHUB_STEP_SUMMARY
+      - run: gemini -p 'review menu-service java code, You are an experienced security programmer doing a code review. Looking for security violations in the code. Examine the attached code for potential security issues. Issues to look for, look for instances of insecure cookies, insecure session management, any instances of SQL injection, cross-site scripting (XSS),  or other vulnerabilities that could compromise user data or allow unauthorized access to the application.  Provide a comprehensive report of any identified vulnerabilities and recommend appropriate remediation measures. Output the findings with class and method names followed by the found issues' -y >> $GITHUB_STEP_SUMMARY
         shell: bash
